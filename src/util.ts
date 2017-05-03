@@ -8,6 +8,15 @@ export function isIE(): boolean {
   return navigator.appVersion.indexOf("MSIE") !== -1;
 }
 
+export function isError(value: any): boolean {
+  switch (Object.prototype.toString.call(value)) {
+    case '[object Error]': return true;
+    case '[object Exception]': return true;
+    case '[object DOMException]': return true;
+    default: return value instanceof Error;
+  }
+}
+
 /**
  * 生产唯一ID
  * @export

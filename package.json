@@ -1,6 +1,6 @@
 {
   "name": "trace-js",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "web develop error trace",
   "main": "lib/trace.js",
   "scripts": {
@@ -16,13 +16,15 @@
   },
   "homepage": "https://github.com/undead25/trace-js#readme",
   "license": "MIT",
+  "dependencies": {
+    "object-assign": "^4.1.1"
+  },
   "devDependencies": {
     "@types/node": "^7.0.15",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-latest": "^6.24.1",
     "gulp": "^3.9.1",
     "gulp-typescript": "^3.1.6",
-    "object-assign": "^4.1.1",
     "rollup": "^0.41.6",
     "rollup-plugin-babel": "^2.7.1",
     "rollup-plugin-node-resolve": "^3.0.0",

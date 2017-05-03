@@ -1,20 +1,56 @@
 import { defaultConfig } from './config';
 import { OnError } from './onError';
-import { joinRegExp } from './util';
+import { joinRegExp, isError } from './util';
+import Tracekit from './tracekit';
 const objectAssign = Object.assign || require('object-assign');
 
-class Trace {
+export default class Trace {
+  private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
   private globalConfig: Trace.Config = defaultConfig;
+  private onError: OnError;
 
   constructor(config?: Trace.Config) {
     this.globalConfig = objectAssign({}, this.globalConfig, config);
     this.handleConfig();
-    new OnError(this.globalConfig);
+    this.onError = new OnError(this.globalConfig);
+  }
+
+  public captureException(exception: any): void {
+    if (!isError(exception)) {
+      return this.captureMessage(exception);
+    }
+
+    try {
+      const stack: TraceKit.StackTrace = this.computeStackTrace(exception);
+      this.onError.handleStackInfo(stack);
+    } catch (e) {
+      if (exception !== e) throw e;
+    }
+  }
+
+  public captureMessage(message: string): void {
+    if (!!(this.globalConfig.ignoreErrors as RegExp).test
+      && (this.globalConfig.ignoreErrors as RegExp).test(message)) return;
+
+    let exception: any;
+    try {
+      throw new Error(message);
+    } catch (e) {
+      exception = e;
+    }
+
+    let stack = this.computeStackTrace(exception);
+    let frames: Trace.StackFrame[] = this.onError.prepareFrames(stack);
+
+    let catchedException: Trace.CatchedException = {
+      stacktrace: frames,
+      message
+    }
+
+    this.onError.handlePayload([catchedException]);
   }
 
   private handleConfig() {
-    // "Script error." is hard coded into browsers for errors that it can't read.
-    // this is the result of a script being pulled in from an external domain and CORS.
     const ignoreErrors = this.globalConfig.ignoreErrors as Array<RegExp>;
     const ignoreUrls = this.globalConfig.ignoreErrors as Array<RegExp>;
 
@@ -25,8 +61,3 @@ class Trace {
     this.globalConfig.ignoreUrls = ignoreUrls.length && joinRegExp(ignoreUrls);
   }
 }
-
-export default Trace;
-
-const environment: any = window || this;
-environment.Trace = Trace;

@@ -2,6 +2,12 @@ export = Trace;
 export as namespace Trace;
 declare namespace Trace {
 
+  export function init(config?: Config): void;
+
+  export function captureException(exception: any): void;
+
+  export function captureMessage(message: string): void;
+
   interface Config {
     /** 是否开启监控 */
     enabled: boolean;
@@ -31,7 +37,7 @@ declare namespace Trace {
     disableLog: boolean;
     /** 是否不允许发送重复报告，默认 false */
     repeatReport: boolean;
-    /** 最大用户操作数*/    
+    /** 最大用户操作数*/
     maxBreadcrumbs: number;
   }
 
@@ -71,7 +77,7 @@ declare namespace Trace {
 
   interface CatchedException {
     /** 错误类型 */
-    type: string;
+    type?: string;
     /** 错误信息 */
     message: string;
     /** 错误栈数据集 */
@@ -136,4 +142,5 @@ declare namespace Trace {
     /** 上个页面 */
     from?: string;
   }
+
 }

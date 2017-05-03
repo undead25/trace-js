@@ -1,13 +1,13 @@
-import TraceKit from './tracekit.js';
 import { makeRequest } from './request';
 import { environment } from './environment';
 import { BreadCrumbs } from './breadcrumbs';
 import { triggerEvent, guid } from './util';
 const objectAssign = Object.assign || require('object-assign');
+import Tracekit from './tracekit';
 
 export class OnError {
   private _config: Trace.Config;
-  private TraceKit = TraceKit;
+  private Tracekit = Tracekit;
   private breadcrumbs: BreadCrumbs;
 
   private lastGuid: string = null;
@@ -15,7 +15,7 @@ export class OnError {
 
   constructor(config: Trace.Config) {
     this._config = config;
-    TraceKit.report.subscribe((errorReport: any) => {
+    Tracekit['report'].subscribe((errorReport: any) => {
       this.handleStackInfo(errorReport)
     })
     this.breadcrumbs = new BreadCrumbs(config);
@@ -26,7 +26,7 @@ export class OnError {
    * @private
    * @param {TraceKit.StackTrace} stackInfo TraceKit获取的栈信息
    */
-  private handleStackInfo(stackInfo: TraceKit.StackTrace): void {
+  public handleStackInfo(stackInfo: TraceKit.StackTrace): void {
     let frames: Array<Trace.StackFrame> = this.prepareFrames(stackInfo);
 
     triggerEvent('handle', { stackInfo });
@@ -40,7 +40,7 @@ export class OnError {
    * @param {TraceKit.StackTrace} stackInfo TraceKit获取的栈信息
    * @returns {Trace.StackFrame[]} 
    */
-  private prepareFrames(stackInfo: TraceKit.StackTrace): Trace.StackFrame[] {
+  public prepareFrames(stackInfo: TraceKit.StackTrace): Trace.StackFrame[] {
     let frames: Array<Trace.StackFrame> = [];
     if (stackInfo.stack && stackInfo.stack.length) {
       stackInfo.stack.forEach(item => {
@@ -107,7 +107,7 @@ export class OnError {
    * @private
    * @param {Array<Trace.CatchedException>} exception 
    */
-  private handlePayload(exception: Array<Trace.CatchedException>) {
+  public handlePayload(exception: Array<Trace.CatchedException>) {
     // 合并报告
     const reportData: Trace.Report = {
       url: location.href,

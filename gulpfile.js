@@ -46,7 +46,7 @@ gulp.task('dev', () => {
   }).then((bundle) => {
     bundle.write({
       format: "umd",
-      moduleName: "trace",
+      moduleName: "Trace",
       dest: "./lib/trace.js",
       sourceMap: true,
       banner
