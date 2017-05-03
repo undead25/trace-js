@@ -12,7 +12,7 @@ const banner = `
  * Licensed under the ${pkg.license} License.
  */`
 
-gulp.task('scripts:production', () => {
+gulp.task('production', () => {
   return rollup.rollup({
     entry: "./src/index.ts",
     plugins: [
@@ -33,7 +33,7 @@ gulp.task('scripts:production', () => {
   })
 });
 
-gulp.task('scripts:dev', () => {
+gulp.task('dev', () => {
   return rollup.rollup({
     entry: "./src/index.ts",
     plugins: [
@@ -47,7 +47,7 @@ gulp.task('scripts:dev', () => {
     bundle.write({
       format: "umd",
       moduleName: "trace",
-      dest: "./lib/trace.min.js",
+      dest: "./lib/trace.js",
       sourceMap: true,
       banner
     });
@@ -55,7 +55,7 @@ gulp.task('scripts:dev', () => {
 });
 
 gulp.task('watch', () => {
-  gulp.watch('./src/**/*.ts', ['scripts']);
+  gulp.watch('./src/**/*.ts', ['dev', 'production']);
 })
 
-gulp.task('default', ['scripts', 'watch']);
+gulp.task('default', ['dev', 'production', 'watch']);

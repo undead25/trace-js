@@ -2,6 +2,10 @@
   "name": "trace-js",
   "version": "0.0.1",
   "description": "web develop error trace",
+  "main": "lib/trace.js",
+  "scripts": {
+    "start": "gulp"
+  },
   "author": "undead25",
   "repository": {
     "type": "git",
