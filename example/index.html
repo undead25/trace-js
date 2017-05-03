@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Trace Example</title>
+  <script src="../lib/trace.min.js"></script>
+</head>
+<body>
+  <button type="button" onclick="ajax()">TEST</button>
+  <input class="abc" type="text" onblur="test2()">
+  <a href="test.html">跳链</a>
+  <script>
+    new Trace();
+    let i = 1;
+    function test() {
+      var a = 1;
+      var b = 2;
+      var c = 3;
+      console.log(d);
+      // console.log(e);
+      // console.log(f);
+    }
+    function test2() {
+      console.log(bbbb)
+    }
+    function ajax() {
+      const xhr = new XMLHttpRequest();
+      xhr.open('get', 'https://api.github.com/users/octocat/orgs2', true);
+      // xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function () {
+        console.log('onreadystatechange'+ i++)
+      }
+      try {
+        xhr.send(JSON.stringify({ a: 'bbbb' }));
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# 日志 #
+logs
+*.log
+
+# 依赖包 #
+node_modules
+
+# 开发工具 #
+.idea
+.vscode
+*.swp
+
+# Mac #
+.DS_Store
+
+# SVN #
+/.svn
