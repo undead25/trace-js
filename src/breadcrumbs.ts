@@ -1,5 +1,4 @@
 import { getAttributes, htmlTreeAsString, polyfill, wrap, parseUrl } from './util';
-import { OnError } from './onError';
 const objectAssign = Object.assign || require('object-assign');
 
 export class BreadCrumbs {

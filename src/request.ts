@@ -1,6 +1,6 @@
 export function makeRequest(options: any):void {
   let request:XMLHttpRequest = new XMLHttpRequest();
-  const hasCORS:boolean = 'withCredentials' in request || typeof XDomainRequest !== 'undefined';
+  const hasCORS:boolean = 'withCredentials' in request || typeof window['XDomainRequest'] !== 'undefined';
 
   if (!hasCORS) return;
 
@@ -20,7 +20,7 @@ export function makeRequest(options: any):void {
   } else {
     // xdomainrequest cannot go http -> https (or vice versa),
     // so always use protocol relative
-    request = new XDomainRequest();
+    request = new (window as any).XDomainRequest();
     url = url.replace(/^https?:/, '');
 
     // onreadystatechange not supported by XDomainRequest

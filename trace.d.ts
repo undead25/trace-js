@@ -2,53 +2,62 @@ export = Trace;
 export as namespace Trace;
 declare namespace Trace {
 
-  export function init(config?: Config): void;
+  /**
+   * Configuration of Trace which will install a global error handler by window.onerror
+   * This is needed to enable Trace
+   * @param {Config} [config] 
+   */
+  export function config(config?: Config): void;
 
-  export function captureException(exception: any): void;
+  /**
+   * Manually capture exception
+   * @param {Error} exception - Error information to be captured
+   */
+  export function captureException(exception: Error): void;
 
+  /**
+   * Manually capture message
+   * @param {string} message - plain message to be captured
+   */
   export function captureMessage(message: string): void;
 
   interface Config {
-    /** 是否开启监控 */
-    enabled: boolean;
-    /** 监控上报地址 */
+    /** Server side API url to get the report */
     readonly reportUrl: string;
     /** 客户端的 API key，由后端生成，客户端唯一标识符 */
     readonly apiKey: string;
     /** 最大堆栈长度 */
-    maxStackDepth: number;
+    readonly maxStackDepth?: number;
     /** 忽略某个错误 */
-    ignoreErrors: RegExp | Array<RegExp>;
+    ignoreErrors?: RegExp | Array<RegExp>;
     /** 忽略某个错误 */
-    ignoreUrls: RegExp | Array<RegExp>;
+    ignoreUrls?: RegExp | Array<RegExp>;
     /** 自动记录用户操作面包屑 */
-    autoBreadcrumbs: autoBreadcrumbs;
+    readonly autoBreadcrumbs?: autoBreadcrumbs;
     /** 是否捕获 ajax 请求 */
-    catchAjax: boolean;
+    readonly catchAjax?: boolean;
     /** 是否捕获 console error 信息 */
-    catchConsole: boolean;
+    readonly catchConsole?: boolean;
     /** 发布版本，`production` | `test` | `developement` */
-    releaseStage: string;
+    readonly releaseStage?: string;
     /** 客户端版本 */
-    version?: string;
-    /** 用户信息 */
-    userInfo?: Object;
-    /** 异常捕捉后是否不允许控制台输出，默认 false */
-    disableLog: boolean;
+    readonly version?: string;
+    /** User information */
+    readonly userInfo?: Object;
     /** 是否不允许发送重复报告，默认 false */
-    repeatReport: boolean;
-    /** 最大用户操作数*/
-    maxBreadcrumbs: number;
+    readonly repeatReport?: boolean;
+    /** Max user actions to be stored to send. Default: 100 */
+    readonly maxBreadcrumbs?: number;
   }
 
   interface autoBreadcrumbs {
-    /** 异步请求操作 */
+    /** xhr request */
     xhr: boolean;
-    /** dom事件 */
+    /** Dom events */
     dom: boolean;
-    /** location变动 */
+    /** Location change */
     location: boolean;
-    /** 调试，默认 false */
+    /** Console information */
     console: boolean;
   }
 

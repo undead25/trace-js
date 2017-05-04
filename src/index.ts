@@ -1,5 +1,5 @@
 import { defaultConfig } from './config';
-import { OnError } from './onError';
+import { Report } from './report';
 import { joinRegExp, isError } from './util';
 import Tracekit from './tracekit';
 const objectAssign = Object.assign || require('object-assign');
@@ -7,17 +7,17 @@ const objectAssign = Object.assign || require('object-assign');
 export default class Trace {
   private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
   private globalConfig: Trace.Config = defaultConfig;
-  private onError: OnError;
+  private onError: Report;
 
-  constructor(config?: Trace.Config) {
+  public config(config?: Trace.Config) {
     this.globalConfig = objectAssign({}, this.globalConfig, config);
-    this.handleConfig();
-    this.onError = new OnError(this.globalConfig);
+    this.processConfig();
+    this.onError = new Report(this.globalConfig);
   }
 
-  public captureException(exception: any): void {
+  public captureException(exception: Error): void {
     if (!isError(exception)) {
-      return this.captureMessage(exception);
+      return this.captureMessage(exception as any);
     }
 
     try {
@@ -50,7 +50,7 @@ export default class Trace {
     this.onError.handlePayload([catchedException]);
   }
 
-  private handleConfig() {
+  private processConfig() {
     const ignoreErrors = this.globalConfig.ignoreErrors as Array<RegExp>;
     const ignoreUrls = this.globalConfig.ignoreErrors as Array<RegExp>;
 

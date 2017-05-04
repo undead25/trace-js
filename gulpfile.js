@@ -1,56 +1,54 @@
 const gulp = require('gulp');
-const rollup = require('rollup');
+const rollup = require('rollup').rollup;
 const typescript = require('rollup-plugin-typescript')
 const resolve = require('rollup-plugin-node-resolve');
 const babel = require('rollup-plugin-babel');
 const uglify = require('rollup-plugin-uglify');
+// const uglify = require('uglify-js')
 const pkg = require('./package.json');
 
 const banner = `
 /*!
  * ${pkg.name} v${pkg.version}
  * Licensed under the ${pkg.license} License.
- */`
+ */`;
 
-gulp.task('production', () => {
-  return rollup.rollup({
+const packRollup = (options) => {
+  let plugins = [
+    typescript(),
+    typescript(),
+    babel({
+      exclude: 'node_modules/**'
+    }),
+  ];
+  if (options.minify) plugins.push(uglify());
+
+  return rollup({
     entry: "./src/index.ts",
-    plugins: [
-      typescript(),
-      resolve(),
-      babel({
-        exclude: 'node_modules/**'
-      }),
-      uglify()
-    ],
+    plugins,
   }).then((bundle) => {
     bundle.write({
-      format: "umd",
-      moduleName: "trace",
-      dest: "./lib/trace.min.js",
+      format: options.format,
+      moduleName: "_Trace",
+      dest: options.dest,
+      banner,
       sourceMap: true
     });
+  })
+}
+
+gulp.task('production', () => {
+  return packRollup({
+    dest: './lib/trace.min.js',
+    format: 'umd',
+    minify: true
   })
 });
 
 gulp.task('dev', () => {
-  return rollup.rollup({
-    entry: "./src/index.ts",
-    plugins: [
-      typescript(),
-      resolve(),
-      babel({
-        exclude: 'node_modules/**'
-      })
-    ],
-  }).then((bundle) => {
-    bundle.write({
-      format: "umd",
-      moduleName: "Trace",
-      dest: "./lib/trace.js",
-      sourceMap: true,
-      banner
-    });
+  return packRollup({
+    dest: './lib/trace.js',
+    format: 'umd'
   })
 });
 

@@ -8,6 +8,11 @@
   <script src="../lib/trace.js"></script>
 </head>
 <body>
-  <script>new Trace({apiKey: 'test1'});window.test();</script>
+  <script>
+    Trace.config({
+      apiKey: 'test'
+    })
+    window.test();
+  </script>
 </body>
 </html>

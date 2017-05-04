@@ -1,7 +1,6 @@
 
 export const defaultConfig: Trace.Config = {
   apiKey: '',
-  enabled: true,
   reportUrl: 'http://localhost:3001/tracer/error',
   ignoreErrors: [],
   ignoreUrls: [],
@@ -14,7 +13,6 @@ export const defaultConfig: Trace.Config = {
   releaseStage: 'production',
   catchAjax: true,
   catchConsole: true,
-  disableLog: false,
   maxStackDepth: 10,
   repeatReport: false,
   maxBreadcrumbs: 100

@@ -1,8 +1,8 @@
 {
   "name": "trace-js",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "web develop error trace",
-  "main": "lib/trace.js",
+  "main": "index.js",
   "scripts": {
     "start": "gulp"
   },

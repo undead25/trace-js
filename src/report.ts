@@ -5,7 +5,7 @@ import { triggerEvent, guid } from './util';
 const objectAssign = Object.assign || require('object-assign');
 import Tracekit from './tracekit';
 
-export class OnError {
+export class Report {
   private _config: Trace.Config;
   private Tracekit = Tracekit;
   private breadcrumbs: BreadCrumbs;
@@ -130,8 +130,6 @@ export class OnError {
    * @param {Trace.Report} payload
    */
   private sendPayload(payload: Trace.Report) {
-    if (!this._config.enabled) return;
-
     this.lastGuid = payload.guid;
     if (!this._config.repeatReport && this.isRepeatReport(payload)) return;
 
@@ -151,7 +149,7 @@ export class OnError {
           data: payload,
           src: this._config.reportUrl
         })
-        error = error || new Error(`发送上报请求失败`);
+        error = error || new Error(`Trace: report sending failed!`);
         return new Promise(resolve => resolve(error))
       }
     }
