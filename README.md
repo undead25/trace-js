@@ -1,4 +1,4 @@
-## Useage
+## Usage
 
 ### Augular
 > Angular means Angular 2+
