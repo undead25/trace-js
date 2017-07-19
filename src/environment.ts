@@ -1,4 +1,3 @@
-
 export const environment: Trace.Environment = {
   /** 屏幕宽度 */
   screenWidth: (document.documentElement ? document.documentElement.clientWidth : document.body.clientWidth),

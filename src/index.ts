@@ -2,6 +2,7 @@ import { defaultConfig } from './config';
 import { Report } from './report';
 import { joinRegExp, isError } from './util';
 import Tracekit from './tracekit';
+import Perf from './performance';
 const objectAssign = Object.assign || require('object-assign');
 
 export default class Trace {
@@ -13,6 +14,8 @@ export default class Trace {
     this.globalConfig = objectAssign({}, this.globalConfig, config);
     this.processConfig();
     this.onError = new Report(this.globalConfig);
+    const analyticsData = new Perf().collection;
+    console.log(analyticsData);
   }
 
   public captureException(exception: Error): void {
