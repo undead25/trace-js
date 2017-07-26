@@ -48,7 +48,7 @@ gulp.task('production', () => {
 gulp.task('dev', () => {
   return packRollup({
     dest: './lib/trace.js',
-    format: 'umd'
+    format: 'iife'
   })
 });
 

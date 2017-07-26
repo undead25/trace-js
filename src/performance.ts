@@ -18,7 +18,7 @@ export default class Performance {
     // TCP 链接耗时
     const tcp = timing.connectEnd - timing.connectStart;
     // TLS 耗时
-    const tls = timing.secureConnectionStart - timing.connectStart;
+    const tls = timing.secureConnectionStart === 0 ? 0 :  timing.secureConnectionStart - timing.connectStart;
     // 白屏时间
     const firstPaint = timing.responseStart - timing.navigationStart;
     // 总体网络交互耗时
@@ -30,16 +30,18 @@ export default class Performance {
     // 用户可操作时间
     const interactive = timing.domInteractive - timing.navigationStart;
     // 页面加载时间
-    const pageLoad = timing.loadEventEnd - timing.navigationStart;
+    const pageLoad = timing.loadEventStart - timing.navigationStart;
 
     // 重定向次数
     const redirectCount = navigation.redirectCount;
     // 网页的加载来源
     const navigationType = navigation.type;
 
+
     this.collection = {
       timing, redirect, dns, tcp, tls, firstPaint, network, dom, firstScreen, interactive, pageLoad,
       redirectCount, navigationType
     }
+    
   }
 }

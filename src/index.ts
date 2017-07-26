@@ -5,6 +5,12 @@ import Tracekit from './tracekit';
 import Perf from './performance';
 const objectAssign = Object.assign || require('object-assign');
 
+window.addEventListener('load', () => {
+  const analyticsData = new Perf().collection;
+  console.log(analyticsData);
+  window.navigator.sendBeacon('http://localhost:3001/statistic/', JSON.stringify(analyticsData))
+})
+
 export default class Trace {
   private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
   private globalConfig: Trace.Config = defaultConfig;
@@ -14,8 +20,6 @@ export default class Trace {
     this.globalConfig = objectAssign({}, this.globalConfig, config);
     this.processConfig();
     this.onError = new Report(this.globalConfig);
-    const analyticsData = new Perf().collection;
-    console.log(analyticsData);
   }
 
   public captureException(exception: Error): void {
