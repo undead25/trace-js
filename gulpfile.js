@@ -13,6 +13,8 @@ const banner = `
  * Licensed under the ${pkg.license} License.
  */`;
 
+const footer = `window.Trace = new _Trace()`
+
 const packRollup = (options) => {
   let plugins = [
     typescript(),
@@ -32,6 +34,7 @@ const packRollup = (options) => {
       moduleName: "_Trace",
       dest: options.dest,
       banner,
+      footer,
       sourceMap: true
     });
   })
