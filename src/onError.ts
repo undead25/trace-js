@@ -130,26 +130,24 @@ export class OnError {
    * @param {Trace.Report} payload
    */
   private sendPayload(payload: Trace.Report) {
-    if (!this._config.enabled) return;
-
     this.lastGuid = payload.guid;
     if (!this._config.repeatReport && this.isRepeatReport(payload)) return;
 
     this.lastReport = payload;
     const requestOptions = {
-      url: this._config.reportUrl,
+      url: this._config.exceptionUrl,
       data: payload,
       onSuccess: () => {
         triggerEvent('success', {
           data: payload,
-          src: this._config.reportUrl
+          src: this._config.exceptionUrl
         })
         return new Promise(() => { });
       },
       OnError: (error) => {
         triggerEvent('failure', {
           data: payload,
-          src: this._config.reportUrl
+          src: this._config.exceptionUrl
         })
         error = error || new Error(`发送上报请求失败`);
         return new Promise(resolve => resolve(error))

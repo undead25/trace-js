@@ -135,19 +135,19 @@ export class Report {
 
     this.lastReport = payload;
     const requestOptions = {
-      url: this._config.reportUrl,
+      url: this._config.exceptionUrl,
       data: payload,
       onSuccess: () => {
         triggerEvent('success', {
           data: payload,
-          src: this._config.reportUrl
+          src: this._config.exceptionUrl
         })
         return new Promise(() => { });
       },
       OnError: (error) => {
         triggerEvent('failure', {
           data: payload,
-          src: this._config.reportUrl
+          src: this._config.exceptionUrl
         })
         error = error || new Error(`Trace: report sending failed!`);
         return new Promise(resolve => resolve(error))

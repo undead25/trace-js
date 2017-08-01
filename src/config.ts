@@ -1,7 +1,8 @@
 
 export const defaultConfig: Trace.Config = {
   apiKey: '',
-  reportUrl: 'http://localhost:3001/tracer/error',
+  exceptionUrl: 'http://localhost:3001/tracer/error',
+  performanceUrl: 'http://localhost:3001/api/perf/create',
   ignoreErrors: [],
   ignoreUrls: [],
   autoBreadcrumbs: {

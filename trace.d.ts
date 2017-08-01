@@ -22,8 +22,10 @@ declare namespace Trace {
   export function captureMessage(message: string): void;
 
   interface Config {
-    /** Server side API url to get the report */
-    readonly reportUrl: string;
+    /** Server side API url to get the exception report */
+    readonly exceptionUrl: string;
+    /** Server side API url to get the performance report */
+    readonly performanceUrl: string;
     /** 客户端的 API key，由后端生成，客户端唯一标识符 */
     readonly apiKey: string;
     /** 最大堆栈长度 */

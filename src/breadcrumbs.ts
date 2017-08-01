@@ -1,4 +1,6 @@
 import { getAttributes, htmlTreeAsString, polyfill, wrap, parseUrl } from './util';
+import Perf from './performance';
+
 const objectAssign = Object.assign || require('object-assign');
 
 export class BreadCrumbs {
@@ -207,10 +209,16 @@ export class BreadCrumbs {
 
     // Use only the path component of the URL if the URL matches the current
     // document (almost all the time when using pushState)
-    if (parsedLoc.protocol === parsedTo.protocol && parsedLoc.host === parsedTo.host)
+    if (parsedLoc.protocol === parsedTo.protocol && parsedLoc.host === parsedTo.host) {
       to = parsedTo.relative;
-    if (parsedLoc.protocol === parsedFrom.protocol && parsedLoc.host === parsedFrom.host)
+    }
+
+    if (parsedLoc.protocol === parsedFrom.protocol && parsedLoc.host === parsedFrom.host) {
       from = parsedFrom.relative;
+    }
+
+    const perf = new Perf(this._config);
+    perf.payloadSending();
 
     this.captureBreadcrumb({
       category: 'navigation',
