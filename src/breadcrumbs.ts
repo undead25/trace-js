@@ -1,8 +1,6 @@
 import { getAttributes, htmlTreeAsString, polyfill, wrap, parseUrl } from './util';
 import Perf from './performance';
 
-const objectAssign = Object.assign || require('object-assign');
-
 export class BreadCrumbs {
   public crumbsData: Array<Trace.BreadCrumb> = [];
 
@@ -283,7 +281,7 @@ export class BreadCrumbs {
    * @param {Trace.BreadCrumb} crumb 
    */
   private captureBreadcrumb(crumb: Trace.BreadCrumb): void {
-    let _crumb = objectAssign({}, crumb, { timestamp: new Date().getTime() });
+    let _crumb = Object.assign({}, crumb, { timestamp: new Date().getTime() });
     this.crumbsData.push(_crumb);
 
     // 超出后删除最先记录的一个

@@ -4,27 +4,13 @@ import { joinRegExp, isError } from './util';
 import Tracekit from './tracekit';
 import Perf from './performance';
 
-const objectAssign = Object.assign || require('object-assign');
-
-// window.addEventListener('popstate', () => {
-//   const analyticsData = new Perf().collection;
-//   console.log(analyticsData);
-//   window.navigator.sendBeacon('http://localhost:3001/statistic/', JSON.stringify(analyticsData))
-// })
-
-// window.onpopstate = function () {
-//   console.log('aaaaaaaaaaaaaaaaa')
-//   const analyticsData = new Perf().collection;
-//   console.log(analyticsData);
-//   window.navigator.sendBeacon('http://localhost:3001/statistic/', JSON.stringify(analyticsData))
-// }
 export default class Trace {
   private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
   private globalConfig: Trace.Config = defaultConfig;
   private onError: Report;
 
   public config(config?: Trace.Config) {
-    this.globalConfig = objectAssign({}, this.globalConfig, config);
+    this.globalConfig = Object.assign({}, this.globalConfig, config);
     this.processConfig();
     this.onError = new Report(this.globalConfig);
     window.addEventListener('beforeunload', () => {

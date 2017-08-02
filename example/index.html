@@ -8,6 +8,8 @@
   <title>Trace Example</title>
   <script src="http://cdn.bootcss.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"></script>
   <script src="../lib/trace.js"></script>
+  <!-- <script src="https://cdn.ravenjs.com/3.17.0/raven.min.js" crossorigin="anonymous"></script> -->
+  
 </head>
 
 <body>
@@ -17,14 +19,20 @@
     <li>3</li>
   </ul>
   <script>
-    // window.onload = function() {
-    //   var Trace = new`_Trace();
-    // }
     Trace.config({
       apiKey: 'test'
     })
-    window.test();
-
+    // Raven.config('https://d10e1ae418224cf6a70893b7d08b9310@sentry.io/15729211').install()
+    // window.onerror = function(name, file, line, col, err) {
+    //   console.log('name: ' + name);
+    //   console.log('file: ' + file);
+    //   console.log('line: ' + line);
+    //   console.log('col: ' + col);
+    //   console.log('err: ' + err);
+    // }
+    // window.test();
+    const b = 3;
+    b = 4;
   </script>
 
 </body>

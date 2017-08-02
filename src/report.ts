@@ -2,7 +2,6 @@ import { makeRequest } from './request';
 import { environment } from './environment';
 import { BreadCrumbs } from './breadcrumbs';
 import { triggerEvent, guid } from './util';
-const objectAssign = Object.assign || require('object-assign');
 import Tracekit from './tracekit';
 
 export class Report {
@@ -32,6 +31,28 @@ export class Report {
     triggerEvent('handle', { stackInfo });
 
     this.processException(stackInfo.name, stackInfo.message, stackInfo.url, frames)
+  }
+
+  /**
+   * 处理报告数据
+   * @private
+   * @param {Array<Trace.CatchedException>} exception 
+   */
+  public handlePayload(exception: Array<Trace.CatchedException>) {
+    // 合并报告
+    const reportData: Trace.Report = {
+      url: location.href,
+      title: document.title,
+      environment,
+      exception,
+      version: this._config.version,
+      apiKey: this._config.apiKey,
+      timestamp: new Date().getTime(),
+      guid: guid(),
+      breadcrumbs: this.breadcrumbs.crumbsData,
+    }
+    // 发送报告
+    this.sendPayload(reportData)
   }
 
   /**
@@ -100,28 +121,6 @@ export class Report {
 
     // 处理报告数据
     this.handlePayload(exception);
-  }
-
-  /**
-   * 处理报告数据
-   * @private
-   * @param {Array<Trace.CatchedException>} exception 
-   */
-  public handlePayload(exception: Array<Trace.CatchedException>) {
-    // 合并报告
-    const reportData: Trace.Report = {
-      url: location.href,
-      title: document.title,
-      environment,
-      exception,
-      version: this._config.version,
-      apiKey: this._config.apiKey,
-      timestamp: new Date().getTime(),
-      guid: guid(),
-      breadcrumbs: this.breadcrumbs.crumbsData,
-    }
-    // 发送报告
-    this.sendPayload(reportData)
   }
 
   /**

@@ -57,6 +57,7 @@ gulp.task('dev', () => {
 
 gulp.task('watch', () => {
   gulp.watch('./src/**/*.ts', ['dev', 'production']);
+  gulp.watch('./src/**/*.js', ['dev', 'production']);
 })
 
 gulp.task('default', ['dev', 'production', 'watch']);

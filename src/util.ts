@@ -1,7 +1,6 @@
 
 /**
  * 是否为IE浏览器
- * @export
  * @returns {boolean} 
  */
 export function isIE(): boolean {
@@ -19,7 +18,6 @@ export function isError(value: any): boolean {
 
 /**
  * 生产唯一ID
- * @export
  * @returns {string} - 唯一guid
  */
 export function guid(): string {
