@@ -1,52 +1,56 @@
-import { makeRequest } from './request';
-import { environment } from './environment';
 import { BreadCrumbs } from './breadcrumbs';
+import { Exception } from './exception';
+import { environment } from './environment';
+import { makeRequest } from './request';
 import { triggerEvent, guid } from './util';
-import Tracekit from './tracekit';
+// import Tracekit from './tracekit';
 
 export class Report {
-  private _config: Trace.Config;
-  private Tracekit = Tracekit;
+  private config: Trace.Config;
+  // private Tracekit = Tracekit;
   private breadcrumbs: BreadCrumbs;
 
   private lastGuid: string = null;
   private lastReport: Trace.Report = null;
 
   constructor(config: Trace.Config) {
-    this._config = config;
-    Tracekit['report'].subscribe((errorReport: any) => {
-      this.handleStackInfo(errorReport)
-    })
+    this.config = config;
+    // Tracekit['report'].subscribe((errorReport: any) => {
+    //   this.handleStackInfo(errorReport)
+    // })
+    const exception = new Exception();
+    window.onerror = exception.handleWindowOnError;
+    // this.handleStackInfo(exception.stackInfo);
     this.breadcrumbs = new BreadCrumbs(config);
   }
 
   /**
    * 处理栈信息
    * @private
-   * @param {TraceKit.StackTrace} stackInfo TraceKit获取的栈信息
+   * @param {Trace.StackInfo} stackInfo TraceKit获取的栈信息
    */
-  public handleStackInfo(stackInfo: TraceKit.StackTrace): void {
+  public handleStackInfo(stackInfo: Trace.StackInfo): void {
     let frames: Array<Trace.StackFrame> = this.prepareFrames(stackInfo);
 
     triggerEvent('handle', { stackInfo });
-
-    this.processException(stackInfo.name, stackInfo.message, stackInfo.url, frames)
+    const { type, message, url, lineno } = stackInfo;
+    this.handleException(type, message, url, lineno, frames)
   }
 
   /**
    * 处理报告数据
    * @private
-   * @param {Array<Trace.CatchedException>} exception 
+   * @param {Trace.CatchedException} exception 
    */
-  public handlePayload(exception: Array<Trace.CatchedException>) {
+  public handlePayload(exception: Trace.CatchedException) {
     // 合并报告
     const reportData: Trace.Report = {
       url: location.href,
       title: document.title,
       environment,
       exception,
-      version: this._config.version,
-      apiKey: this._config.apiKey,
+      version: this.config.version,
+      apiKey: this.config.apiKey,
       timestamp: new Date().getTime(),
       guid: guid(),
       breadcrumbs: this.breadcrumbs.crumbsData,
@@ -58,66 +62,54 @@ export class Report {
   /**
    * 设置栈帧数据集
    * @private
-   * @param {TraceKit.StackTrace} stackInfo TraceKit获取的栈信息
+   * @param {Trace.StackInfo} stackInfo TraceKit获取的栈信息
    * @returns {Trace.StackFrame[]} 
    */
-  public prepareFrames(stackInfo: TraceKit.StackTrace): Trace.StackFrame[] {
+  public prepareFrames(stackInfo: Trace.StackInfo): Trace.StackFrame[] {
+    const { stacktrace } = stackInfo
     let frames: Array<Trace.StackFrame> = [];
-    if (stackInfo.stack && stackInfo.stack.length) {
-      stackInfo.stack.forEach(item => {
-        let frame = this.normalizeFrame(item);
-        if (frame) frames.push(frame)
+    if (stacktrace.frames && stacktrace.frames.length) {
+      stacktrace.frames.forEach(item => {
+        frames.push(item)
       });
     }
-    frames = frames.slice(0, this._config.maxStackDepth);
+    frames = frames.slice(0, this.config.maxStackDepth);
     return frames;
   }
 
   /**
-   * 统一自定义栈帧结构
-   * @private
-   * @param {TraceKit.StackFrame} frame - TraceKit获取的栈帧
-   * @returns {Trace.StackFrame} - 统一后的栈帧对象
+   * Handle exception
+   * @param {string} type 
+   * @param {string} message 
+   * @param {string} url 
+   * @param {number} lineno 
+   * @param {Array<Trace.StackFrame>} frames 
+   * @returns {void} 
    */
-  private normalizeFrame(frame: TraceKit.StackFrame): Trace.StackFrame {
-    if (!frame.url) return;
-    const normalized = {
-      fileName: frame.url,
-      lineNumber: frame.line,
-      columnNumber: frame.column,
-      function: frame.func || '?'
-    }
-    return normalized;
-  }
-
-  /**
-   * 处理异常
-   * @private
-   * @param {string} type - 异常类型
-   * @param {string} message - 异常信息
-   * @param {string} fileName - 异常路径
-   * @param {Array<Trace.StackFrame>} frames - 异常栈帧数据集
-   */
-  private processException(type: string, message: string, fileName: string, frames: Array<Trace.StackFrame>): void {
-    let config = this._config;
-    let stacktrace: Array<Trace.StackFrame> = [];
+  private handleException(type: string, message: string, url: string, lineno: number, frames: Array<Trace.StackFrame>): void {
+    let config = this.config;
+    let stacktrace: Trace.StackTrace;
     if (!!(config.ignoreErrors as RegExp).test && (config.ignoreErrors as RegExp).test(message)) return;
 
     message += '';
 
     if (frames && frames.length) {
-      fileName = frames[0].fileName || fileName;
+      url = frames[0].source || url;
       frames.reverse(); // 倒序排列
-      stacktrace = frames;
-    } else if (fileName) {
-      stacktrace.push({
-        fileName
-      })
+      stacktrace.frames = frames;
+    } else if (url) {
+      stacktrace.frames = [
+        { source: url, lineno }
+      ]
     }
 
-    if (!!(config.ignoreUrls as RegExp).test && (config.ignoreUrls as RegExp).test(fileName)) return;
+    if (!!(config.ignoreUrls as RegExp).test && (config.ignoreUrls as RegExp).test(url)) return;
 
-    let exception: Array<Trace.CatchedException> = [{ type, message, stacktrace }];
+    let exception: Trace.CatchedException = {
+      type,
+      message,
+      stacktrace
+    }
 
     // 处理报告数据
     this.handlePayload(exception);
@@ -130,23 +122,23 @@ export class Report {
    */
   private sendPayload(payload: Trace.Report) {
     this.lastGuid = payload.guid;
-    if (!this._config.repeatReport && this.isRepeatReport(payload)) return;
+    if (!this.config.repeatReport && this.isRepeatReport(payload)) return;
 
     this.lastReport = payload;
     const requestOptions = {
-      url: this._config.exceptionUrl,
+      url: this.config.exceptionUrl,
       data: payload,
       onSuccess: () => {
         triggerEvent('success', {
           data: payload,
-          src: this._config.exceptionUrl
+          src: this.config.exceptionUrl
         })
         return new Promise(() => { });
       },
       OnError: (error) => {
         triggerEvent('failure', {
           data: payload,
-          src: this._config.exceptionUrl
+          src: this.config.exceptionUrl
         })
         error = error || new Error(`Trace: report sending failed!`);
         return new Promise(resolve => resolve(error))
@@ -181,15 +173,15 @@ export class Report {
    * @param {Trace.CatchedException[]} arrayEx2 
    * @returns {boolean} 
    */
-  private isSameException(arrayEx1: Trace.CatchedException[], arrayEx2: Trace.CatchedException[]): boolean {
-    if (!arrayEx1.length || !arrayEx2.length) return false;
+  private isSameException(arrayEx1: Trace.CatchedException, arrayEx2: Trace.CatchedException): boolean {
+    if (!arrayEx1 || !arrayEx2) return false;
 
-    const ex1: Trace.CatchedException = arrayEx1[0];
-    const ex2: Trace.CatchedException = arrayEx2[0];
+    const ex1: Trace.CatchedException = arrayEx1;
+    const ex2: Trace.CatchedException = arrayEx2;
 
     if (ex1.type !== ex2.type || ex1.message !== ex2.message) return false;
 
-    return this.isSameStacktrace(ex1.stacktrace, ex2.stacktrace);
+    return this.isSameStacktrace(ex1.stacktrace.frames, ex2.stacktrace.frames);
   }
 
   /**
@@ -203,9 +195,9 @@ export class Report {
     if (!stacktrace1.length || !stacktrace2.length) return false;
 
     stacktrace1.forEach((item, index) => {
-      if (item.fileName !== stacktrace2[index].fileName ||
-        item.columnNumber !== stacktrace2[index].columnNumber ||
-        item.lineNumber !== stacktrace2[index].lineNumber ||
+      if (item.source !== stacktrace2[index].source ||
+        item.colno !== stacktrace2[index].colno ||
+        item.lineno !== stacktrace2[index].lineno ||
         item.function !== stacktrace2[index].function) return false;
     })
 

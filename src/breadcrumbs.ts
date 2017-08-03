@@ -88,7 +88,6 @@ export class BreadCrumbs {
     return selectors.indexOf(tag) > -1;
   }
 
-
   /**
    * 获取事件操作并写入面包屑
    */

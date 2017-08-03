@@ -3,9 +3,11 @@ import { Report } from './report';
 import { joinRegExp, isError } from './util';
 import Tracekit from './tracekit';
 import Perf from './performance';
+import { Exception } from './exception';
 
 export default class Trace {
-  private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
+  // private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
+  private analyzeErrorStack = new Exception().analyzeErrorStack;
   private globalConfig: Trace.Config = defaultConfig;
   private onError: Report;
 
@@ -25,8 +27,8 @@ export default class Trace {
     }
 
     try {
-      const stack: TraceKit.StackTrace = this.computeStackTrace(exception);
-      this.onError.handleStackInfo(stack);
+      const stackInfo: Trace.StackInfo = this.analyzeErrorStack(exception);
+      this.onError.handleStackInfo(stackInfo);
     } catch (e) {
       if (exception !== e) throw e;
     }
@@ -43,15 +45,15 @@ export default class Trace {
       exception = e;
     }
 
-    let stack = this.computeStackTrace(exception);
+    let stack = this.analyzeErrorStack(exception);
     let frames: Trace.StackFrame[] = this.onError.prepareFrames(stack);
 
     let catchedException: Trace.CatchedException = {
-      stacktrace: frames,
+      stacktrace: { frames },
       message
     }
 
-    this.onError.handlePayload([catchedException]);
+    this.onError.handlePayload(catchedException);
   }
 
   private processConfig() {

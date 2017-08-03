@@ -69,7 +69,7 @@ declare namespace Trace {
     /** 页面标题 */
     readonly title: string;
     /** 异常数据集 */
-    readonly exception: Array<CatchedException>;
+    readonly exception: CatchedException;
     /** 客户端环境 */
     readonly environment: Environment;
     /** 客户端用户信息 */
@@ -86,25 +86,47 @@ declare namespace Trace {
     readonly breadcrumbs?: Array<BreadCrumb>;
   }
 
+  interface StackInfo {
+    type: string;
+    message: string;
+    url: string;
+    lineno: number;
+    colno: number;
+    stacktrace: StackTrace;
+  }
+
+  interface StackTrace {
+    frames: Array<StackFrame>;
+  }
+
+  interface StackFrame {
+    source: string;
+    function?: string;
+    args?: Array<string>;
+    lineno: number;
+    colno?: number;
+    context?: Array<string>;
+  }
+
   interface CatchedException {
     /** 错误类型 */
     type?: string;
     /** 错误信息 */
     message: string;
     /** 错误栈数据集 */
-    stacktrace: Array<StackFrame>;
+    stacktrace: StackTrace;
   }
 
-  interface StackFrame {
-    /** 发生错误对应的脚本路径 */
-    fileName: string;
-    /** 发生错误行号 */
-    lineNumber?: number;
-    /** 发生错误列号 */
-    columnNumber?: number;
-    /** 发生错误对应的函数 */
-    function?: string;
-  }
+  // interface StackFrame {
+  //   /** 发生错误对应的脚本路径 */
+  //   fileName: string;
+  //   /** 发生错误行号 */
+  //   lineNumber?: number;
+  //   /** 发生错误列号 */
+  //   columnNumber?: number;
+  //   /** 发生错误对应的函数 */
+  //   function?: string;
+  // }
 
   interface Environment {
     /** 屏幕宽度 */
