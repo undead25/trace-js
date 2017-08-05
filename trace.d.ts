@@ -89,10 +89,10 @@ declare namespace Trace {
   interface StackInfo {
     type: string;
     message: string;
-    url: string;
-    lineno: number;
-    colno: number;
-    stacktrace: StackTrace;
+    stacktrace?: StackTrace;
+    url?: string;
+    lineNumber?: number;
+    columnNumber?: number;
   }
 
   interface StackTrace {
@@ -100,11 +100,11 @@ declare namespace Trace {
   }
 
   interface StackFrame {
-    source: string;
-    function?: string;
+    fileName: string;
+    func?: string;
     args?: Array<string>;
-    lineno: number;
-    colno?: number;
+    lineNumber: number;
+    columnNumber?: number;
     context?: Array<string>;
   }
 
@@ -175,5 +175,4 @@ declare namespace Trace {
     /** 上个页面 */
     from?: string;
   }
-
 }

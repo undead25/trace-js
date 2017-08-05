@@ -7,14 +7,15 @@ import { Exception } from './exception';
 
 export default class Trace {
   // private computeStackTrace: TraceKit.ComputeStackTrace = Tracekit['computeStackTrace'];
-  private analyzeErrorStack = new Exception().analyzeErrorStack;
+  private analyzeErrorStack;
   private globalConfig: Trace.Config = defaultConfig;
-  private onError: Report;
+  private report: Report;
 
   public config(config?: Trace.Config) {
     this.globalConfig = Object.assign({}, this.globalConfig, config);
     this.processConfig();
-    this.onError = new Report(this.globalConfig);
+    this.report = new Report(this.globalConfig);
+    this.analyzeErrorStack = new Exception(this.globalConfig).analyzeErrorStack;
     window.addEventListener('beforeunload', () => {
       const perf = new Perf(this.globalConfig);
       perf.payloadSending();
@@ -28,7 +29,7 @@ export default class Trace {
 
     try {
       const stackInfo: Trace.StackInfo = this.analyzeErrorStack(exception);
-      this.onError.handleStackInfo(stackInfo);
+      this.report.handleStackInfo(stackInfo);
     } catch (e) {
       if (exception !== e) throw e;
     }
@@ -45,15 +46,15 @@ export default class Trace {
       exception = e;
     }
 
-    let stack = this.analyzeErrorStack(exception);
-    let frames: Trace.StackFrame[] = this.onError.prepareFrames(stack);
+    let stackInfo = this.analyzeErrorStack(exception);
+    let frames: Trace.StackFrame[] = this.report.prepareFrames(stackInfo);
 
     let catchedException: Trace.CatchedException = {
       stacktrace: { frames },
       message
     }
 
-    this.onError.handlePayload(catchedException);
+    this.report.handlePayload(catchedException);
   }
 
   private processConfig() {

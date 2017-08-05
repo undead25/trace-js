@@ -1,3 +1,4 @@
+import { Report } from './report';
 
 /**
  * Most of all are borrowed from Tracekit
@@ -5,51 +6,54 @@
  * @class Exception
  */
 export class Exception {
-  public stackInfo: Trace.StackInfo = null;
   private originOnError: ErrorEventHandler = window.onerror;
+  private report: Report;
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
   private ERROR_TYPES: RegExp = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/;
 
-  constructor() {
-    this.handleWindowOnError = this.handleWindowOnError.bind(this);
+  constructor(config: Trace.Config) {
+    this.handleWindowOnError();
+    this.report = new Report(config);
   }
 
-  public handleWindowOnError(message: string, source: string, lineno: number, colno: number, error: Error) {
-    if (error) {
-      this.stackInfo = this.analyzeErrorStack(error);
-    } else {
-      const frame: Trace.StackFrame = { source, lineno, colno, function: '?' };
-      let type, msg = message;
-      if (Object.prototype.toString.call(message) === '[object String]') {
-        // example: ['Uncaught TypeError: blah blah blah', 'TypeError' 'blah blah blah']
-        const msgGroup: Array<string> = message.match(this.ERROR_TYPES);
-        if (msgGroup) {
-          type = msgGroup[1];
-          msg = msgGroup[2];
+  private handleWindowOnError() {
+    let self = this;
+    let stackInfo: Trace.StackInfo = null;
+
+    window.onerror = function (message: string, fileName: string, lineNumber: number, columnNumber: number, error: Error) {
+      if (error) {
+        stackInfo = self.analyzeErrorStack(error);
+      } else {
+        const frame: Trace.StackFrame = { fileName, lineNumber, columnNumber, func: '?' };
+        let type, msg = message;
+        if (Object.prototype.toString.call(message) === '[object String]') {
+          // example: ['Uncaught TypeError: blah blah blah', 'TypeError' 'blah blah blah']
+          const msgGroup: Array<string> = message.match(self.ERROR_TYPES);
+          if (msgGroup) {
+            type = msgGroup[1];
+            msg = msgGroup[2];
+          }
+        }
+
+        // set exception data
+        stackInfo = {
+          type,
+          message: msg,
+          lineNumber,
+          columnNumber,
+          stacktrace: {
+            frames: [frame]
+          }
         }
       }
 
-      // set exception data
-      this.stackInfo = {
-        type,
-        message: msg,
-        url: window.location.href,
-        lineno,
-        colno,
-        stacktrace: {
-          frames: [frame]
-        }
-      }
-
-      console.log(this.stackInfo)
+      // apply original window.onerror
+      self.originOnError && self.originOnError.apply(window, arguments);
+      self.report.handleStackInfo(stackInfo);
+      // for console
+      return false;
     }
-
-    // apply original window.onerror
-    this.originOnError && this.originOnError.apply(window, arguments);
-
-    // for console
-    return false;
   }
 
   /**
@@ -57,23 +61,23 @@ export class Exception {
    * @param {Error} error 
    * @param {number} [depth] 
    */
-  public analyzeErrorStack(error: Error, depth?: number) {
+  public analyzeErrorStack(error: Error, depth?: number): Trace.StackInfo {
     const { name, message } = error;
     depth = (depth == null ? 0 : +depth);
-    let errorStack;
+    let stackInfo: Trace.StackInfo;
 
     try {
-      errorStack = this.analyzeErrorStack(error);
-      if (errorStack) return errorStack;
+      stackInfo = this.analyzeStackFromProp(error);
+      if (stackInfo) return stackInfo;
     } catch (e) { }
 
     try {
-      errorStack = this.analyzeStackFromCaller(error, depth + 1);
-      if (errorStack) return errorStack;
+      stackInfo = this.analyzeStackFromCaller(error, depth + 1);
+      if (stackInfo) return stackInfo;
     } catch (e) { }
 
     return {
-      name,
+      type: name,
       message,
       url: window.location.href
     }
@@ -82,9 +86,10 @@ export class Exception {
   /**
    * Analyze stack from error object properties
    * @param {Error} error 
-   * @returns {{ name: string, message: string, url: string, stack: Array<any>}} 
+   * @returns {Trace.StackInfo} 
+   * @memberof Exception
    */
-  private analyzeStackFromProp(error: Error): { name: string, message: string, url: string, stack: Array<any> } {
+  private analyzeStackFromProp(error: Error): Trace.StackInfo {
     const { name, stack, message } = error;
     if (typeof stack === 'undefined' || !stack) return;
 
@@ -97,7 +102,7 @@ export class Exception {
     const lines = stack.split('\n');
     const reference = /^(.*) is undefined$/.exec(message);
 
-    let stackInfo = [], submatch, parts, element;
+    let frames: Array<Trace.StackFrame> = [], submatch, parts, element: Trace.StackFrame;
 
     for (let i = 0, j = lines.length; i < j; ++i) {
       if ((parts = chrome.exec(lines[i]))) {
@@ -110,19 +115,19 @@ export class Exception {
           parts[4] = submatch[3]; // column
         }
         element = {
-          'url': !isNative ? parts[2] : null,
-          'func': parts[1] || '?',
-          'args': isNative ? [parts[2]] : [],
-          'line': parts[3] ? +parts[3] : null,
-          'column': parts[4] ? +parts[4] : null
+          fileName: !isNative ? parts[2] : null,
+          func: parts[1] || '?',
+          args: isNative ? [parts[2]] : [],
+          lineNumber: parts[3] ? +parts[3] : null,
+          columnNumber: parts[4] ? +parts[4] : null
         };
       } else if (parts = winjs.exec(lines[i])) {
         element = {
-          'url': parts[2],
-          'func': parts[1] || '?',
-          'args': [],
-          'line': +parts[3],
-          'column': parts[4] ? +parts[4] : null
+          fileName: parts[2],
+          func: parts[1] || '?',
+          args: [],
+          lineNumber: +parts[3],
+          columnNumber: parts[4] ? +parts[4] : null
         };
       } else if ((parts = gecko.exec(lines[i]))) {
         var isEval = parts[3] && parts[3].indexOf(' > eval') > -1;
@@ -136,33 +141,32 @@ export class Exception {
           // Also note, Firefox's column number is 0-based and everything else expects 1-based,
           // so adding 1
           // NOTE: this hack doesn't work if top-most frame is eval
-          stackInfo[0].column = (error as any).columnNumber + 1;
+          frames[0].columnNumber = (error as any).columnNumber + 1;
         }
         element = {
-          'url': parts[3],
-          'func': parts[1] || '?',
-          'args': parts[2] ? parts[2].split(',') : [],
-          'line': parts[4] ? +parts[4] : null,
-          'column': parts[5] ? +parts[5] : null
+          fileName: parts[3],
+          func: parts[1] || '?',
+          args: parts[2] ? parts[2].split(',') : [],
+          lineNumber: parts[4] ? +parts[4] : null,
+          columnNumber: parts[5] ? +parts[5] : null
         };
       } else {
         continue;
       }
 
-      if (!element.func && element.line) {
-        element.func = '?';
-      }
-
-      stackInfo.push(element);
+      if (!element.func && element.lineNumber) element.func = '?';
+      if (element.args.length === 0) delete element.args;
+      frames.push(element);
     }
 
-    if (!stackInfo.length) return null;
+    if (!frames.length) return null;
 
     return {
-      name,
+      type: name,
       message,
-      url: window.location.href,
-      stack: stackInfo
+      stacktrace: {
+        frames
+      }
     };
   }
 
@@ -170,52 +174,51 @@ export class Exception {
    * Analyze stack from arguments.caller chain
    * @param {Error} error 
    * @param {number} depth 
-   * @returns {{ name: string, message: string, url: string, stack: Array<any> }} 
+   * @returns {Trace.StackInfo} 
    */
-  private analyzeStackFromCaller(error: Error, depth: number): { name: string, message: string, url: string, stack: Array<any> } {
+  private analyzeStackFromCaller(error: Error, depth: number): Trace.StackInfo {
     const { name, message } = error;
     const functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i;
 
-    let stackInfo = [], funcs = {}, recursion = false, parts, item, source;
+    let frames: Array<Trace.StackFrame> = [], funcs = {}, recursion = false, parts, frame: Trace.StackFrame, source;
 
     for (let curr = this.analyzeStackFromCaller.caller; curr && !recursion; curr = curr.caller) {
       if (curr === this.analyzeStackFromProp) {
         continue;
       }
 
-      item = {
-        url: null,
+      frame = {
+        fileName: null,
         func: '?',
-        line: null,
-        column: null
+        lineNumber: null,
+        columnNumber: null
       };
 
       if (curr.name) {
-        item.func = curr.name;
+        frame.func = curr.name;
       } else if ((parts = functionName.exec(curr.toString()))) {
-        item.func = parts[1];
+        frame.func = parts[1];
       }
 
-      typeof item.func === 'undefined' && (item.func = (parts.input as string).substring(0, parts.indexOf('{')));
+      typeof frame.func === 'undefined' && (frame.func = (parts.input as string).substring(0, parts.indexOf('{')));
 
       funcs['' + curr] ? recursion = true : funcs['' + curr] = true;
 
-      stackInfo.push(item);
+      frames.push(frame);
     }
 
-    depth && stackInfo.splice(0, depth);
+    depth && frames.splice(0, depth);
 
-    let result = {
-      name,
+    let stackInfo: Trace.StackInfo = {
+      type: name,
       message,
-      url: window.location.href,
-      stack: stackInfo
+      stacktrace: { frames }
     }
 
     const err: any = error;
-    this.analyzeFirstFrame(result, err.sourceURL || err.fileName, err.line || err.lineNumber, err.message || err.description)
+    this.analyzeFirstFrame(stackInfo, err.sourceURL || err.fileName, err.line || err.lineNumber, err.message || err.description)
 
-    return result;
+    return stackInfo;
   }
 
   /**

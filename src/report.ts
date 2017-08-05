@@ -18,8 +18,10 @@ export class Report {
     // Tracekit['report'].subscribe((errorReport: any) => {
     //   this.handleStackInfo(errorReport)
     // })
-    const exception = new Exception();
-    window.onerror = exception.handleWindowOnError;
+    // const exception = new Exception();
+    // exception.handleWindowOnError();
+    // console.log(exception.stackInfo)
+    // setTimeout(() => console.log(exception.stackInfo), 1000);
     // this.handleStackInfo(exception.stackInfo);
     this.breadcrumbs = new BreadCrumbs(config);
   }
@@ -33,8 +35,8 @@ export class Report {
     let frames: Array<Trace.StackFrame> = this.prepareFrames(stackInfo);
 
     triggerEvent('handle', { stackInfo });
-    const { type, message, url, lineno } = stackInfo;
-    this.handleException(type, message, url, lineno, frames)
+    const { type, message, url, lineNumber, columnNumber } = stackInfo;
+    this.handleException(type, message, url, lineNumber, columnNumber, frames)
   }
 
   /**
@@ -60,7 +62,7 @@ export class Report {
   }
 
   /**
-   * 设置栈帧数据集
+   * 设置栈帧数据集长度
    * @private
    * @param {Trace.StackInfo} stackInfo TraceKit获取的栈信息
    * @returns {Trace.StackFrame[]} 
@@ -86,7 +88,7 @@ export class Report {
    * @param {Array<Trace.StackFrame>} frames 
    * @returns {void} 
    */
-  private handleException(type: string, message: string, url: string, lineno: number, frames: Array<Trace.StackFrame>): void {
+  private handleException(type: string, message: string, fileName: string, lineNumber: number, columnNumber: number, frames: Array<Trace.StackFrame>): void {
     let config = this.config;
     let stacktrace: Trace.StackTrace;
     if (!!(config.ignoreErrors as RegExp).test && (config.ignoreErrors as RegExp).test(message)) return;
@@ -94,23 +96,20 @@ export class Report {
     message += '';
 
     if (frames && frames.length) {
-      url = frames[0].source || url;
+      fileName = frames[0].fileName || fileName;
       frames.reverse(); // 倒序排列
-      stacktrace.frames = frames;
-    } else if (url) {
-      stacktrace.frames = [
-        { source: url, lineno }
-      ]
+      stacktrace = { frames };
+    } else if (fileName) {
+      stacktrace = {
+        frames: [{ fileName, lineNumber, columnNumber }]
+      }
     }
-
-    if (!!(config.ignoreUrls as RegExp).test && (config.ignoreUrls as RegExp).test(url)) return;
-
+    if (!!(config.ignoreUrls as RegExp).test && (config.ignoreUrls as RegExp).test(fileName)) return;
     let exception: Trace.CatchedException = {
       type,
       message,
       stacktrace
     }
-
     // 处理报告数据
     this.handlePayload(exception);
   }
@@ -195,10 +194,10 @@ export class Report {
     if (!stacktrace1.length || !stacktrace2.length) return false;
 
     stacktrace1.forEach((item, index) => {
-      if (item.source !== stacktrace2[index].source ||
-        item.colno !== stacktrace2[index].colno ||
-        item.lineno !== stacktrace2[index].lineno ||
-        item.function !== stacktrace2[index].function) return false;
+      if (item.fileName !== stacktrace2[index].fileName ||
+        item.columnNumber !== stacktrace2[index].columnNumber ||
+        item.lineNumber !== stacktrace2[index].lineNumber ||
+        item.func !== stacktrace2[index].func) return false;
     })
 
     return true;

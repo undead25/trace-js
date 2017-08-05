@@ -45,7 +45,6 @@ export default class Performance {
           return new Promise(resolve => resolve(error))
         }
       }
-      console.log('url change')
       // 发送报告请求
       makeRequest(requestOptions);
     }
